@@ -6,14 +6,30 @@
             {
                "MethodName":"Klout Score",
                "Synopsis":"This method allows you to retrieve a Klout score",
-               "HTTPMethod":"GET",
+               "HTTPMethod":"POST",
                "URI":"/klout.:format",
                "RequiresOAuth":"N",
-               "parameters":[
+               "headers":[
+                  {
+                     "Name":"Content-Type",
+                     "Required":"Y",
+                     "Default":"",
+                     "Type":"string",
+                     "Description":"One or more (comma-separated) Twitter usernames"
+                  }
+               ],
+               "elements":[
                   {
                      "Name":"users",
                      "Required":"Y",
                      "Default":"",
+                     "Type":"string",
+                     "Description":"One or more (comma-separated) Twitter usernames"
+                  },
+                  {
+                     "Name":"blah",
+                     "Required":"Y",
+                     "Default":"TEST",
                      "Type":"string",
                      "Description":"One or more (comma-separated) Twitter usernames"
                   },

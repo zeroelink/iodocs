@@ -321,13 +321,10 @@ function processRequest(req, res, next) {
 
     if (['POST','DELETE','PUT'].indexOf(httpMethod) !== -1) {
         if (!requestBody) {
-            console.log("############test############");
-            console.log(reqQuery);
            // if passed in a series of elements to use to build a request body,
            // build it here based on the content type we need to send
             if (reqQuery.elementNames && reqQuery.elementNames.length > 0) {
                 // consult our header values to find our content type
-                console.log("############test############");
                 var bodyContentType = 'application/json';
                if (reqQuery.headerNames && reqQuery.headerNames.length > 0) {
                     for (var x = 0, len = reqQuery.headerNames.length; x < len; x++) {
@@ -364,6 +361,8 @@ function processRequest(req, res, next) {
                 // by default, we build a bunch of parameters
                 requestBody = query.stringify(params);
            }
+        } else {
+            console.log("#########payloadhere#########");
         }
     }
 
