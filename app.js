@@ -276,6 +276,7 @@ function processRequest(req, res, next) {
     };
 
     var reqQuery = req.body,
+        requestBody = reqQuery.rawpayload || '',
         params = reqQuery.params || {},
         methodURL = reqQuery.methodUri,
         httpMethod = reqQuery.httpMethod,
@@ -319,7 +320,51 @@ function processRequest(req, res, next) {
         };
 
     if (['POST','DELETE','PUT'].indexOf(httpMethod) !== -1) {
-        var requestBody = query.stringify(params);
+        if (!requestBody) {
+            console.log("############test############");
+            console.log(reqQuery);
+           // if passed in a series of elements to use to build a request body,
+           // build it here based on the content type we need to send
+            if (reqQuery.elementNames && reqQuery.elementNames.length > 0) {
+                // consult our header values to find our content type
+                console.log("############test############");
+                var bodyContentType = 'application/json';
+               if (reqQuery.headerNames && reqQuery.headerNames.length > 0) {
+                    for (var x = 0, len = reqQuery.headerNames.length; x < len; x++) {
+                        if (reqQuery.headerNames[x] == 'Content-Type') {
+                           bodyContentType = reqQuery.headerValues[x];
+                        }
+                    }
+                }
+
+                if ( bodyContentType == 'application/xml') {
+                    // we think we want XML -- need to find a way to get a real xml
+                    // builder in here?!
+                    requestBody += '<'+reqQuery.parentElement+'>';
+                    for (var x = 0, len = reqQuery.elementNames.length; x < len; x++) {
+                        if (reqQuery.elementNames[x] != '') {
+                           requestBody += '<' + reqQuery.elementNames[x] + '>';
+                           requestBody += reqQuery.elementValues[x];
+                           requestBody += '</' + reqQuery.elementNames[x] + '>';
+                        }
+                    }
+                    requestBody += '</'+reqQuery.parentElement+'>';
+                }
+                else {
+                    // we think we want JSON - at least this is easy to build
+                    var elList = {};
+                    for (var x = 0, len = reqQuery.elementNames.length; x < len; x++) {
+                        if (reqQuery.elementNames[x] != '') {
+                            elList[reqQuery.elementNames[x]] = reqQuery.elementValues[x];
+                        }
+                    }
+                    requestBody = JSON.stringify(elList);
+                }
+            } else {
+                // by default, we build a bunch of parameters
+                requestBody = query.stringify(params);
+           }
+        }
     }
 
     if (apiConfig.oauth) {
@@ -346,7 +391,7 @@ function processRequest(req, res, next) {
                     console.log(apiSecret);
                     console.log(accessToken);
                     console.log(accessTokenSecret);
-                    
+
                     var oa = new OAuth(apiConfig.oauth.requestURL || null,
                                        apiConfig.oauth.accessURL || null,
                                        apiKey || null,
@@ -532,10 +577,26 @@ function processRequest(req, res, next) {
         }
 
         if (requestBody) {
-            options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+            if (options.headers['Content-Type']) {
+                if (config.debug) {
+                    console.log('Header: Content-Type already set to: ' + options.headers['Content-Type']);
+                }
+            }
+            else {
+                if (config.debug) {
+                    console.log('Setting header: Content-Type = application/x-www-form-urlencoded ');
+                }
+                options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+            }
+            // embed our requestBody and the content type
+            // into the 'req' structure to pass along as part of the
+            // result in the app.post operation
+            req.body.requestBody=requestBody;
+            req.body.requestBodyContentType=options.headers['Content-Type'];
         }
 
         if (config.debug) {
+            console.log('req.body ' + JSON.stringify(req.body));
             console.log(util.inspect(options));
         };
 
@@ -625,7 +686,7 @@ app.dynamicHelpers({
                     req.params.api = pathName;
                 }
             });
-        }       
+        }
         // If the cookie says we're authed for this particular API, set the session to authed as well
         if (req.params.api && req.session[req.params.api] && req.session[req.params.api]['authed']) {
             req.session['authed'] = true;
@@ -669,8 +730,14 @@ app.post('/processReq', oauth, processRequest, function(req, res) {
         headers: req.resultHeaders,
         response: req.result,
         call: req.call,
-        code: req.res.statusCode
+        code: req.res.statusCode,
+        requestBody: req.body.requestBody,
+        requestBodyContentType: req.body.requestBodyContentType
     };
+
+    if (res.statusCode == 204) {
+        res.statusCode = 200;
+    }
 
     res.send(result);
 });
@@ -692,7 +759,7 @@ app.post('/upload', function(req, res) {
 
 // API shortname, all lowercase
 app.get('/:api([^\.]+)', function(req, res) {
-    req.params.api=req.params.api.replace(/\/$/,'');
+    // req.params.api=req.params.api.replace(/\/$/,'');
     res.render('api');
 });
 

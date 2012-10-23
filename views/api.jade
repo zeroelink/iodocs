@@ -1,4 +1,4 @@
-h1=apiInfo.name 
+h1=apiInfo.name
 - if (session.authed && apiInfo.oauth && apiInfo.oauth.type =='three-legged')
     - var authed ='authed'
 - else
@@ -7,7 +7,7 @@ h1=apiInfo.name
 
 form#credentials
     input(type='hidden', name='apiName', value=apiName)
-    - if (apiInfo.auth) 
+    - if (apiInfo.auth)
         section(class='credentials ' + authed)
          - if (authed && apiInfo.oauth)
              span Authenticated with OAuth
@@ -77,7 +77,7 @@ ul
                             span.description #{method.Synopsis}
                             br
                             br
-                            - if (method.parameters.length > 0)
+                            - if (method.parameters && method.parameters.length > 0)
                                 table.parameters
                                     thead
                                         tr
@@ -102,7 +102,7 @@ ul
                                                       - if (parameter.Type =='enumerated')
                                                           select(name='params[' + parameter.Name + ']', placeholder=className)
                                                             - if (parameter.Default =='')
-                                                                option(value='') 
+                                                                option(value='')
                                                             - each choice in parameter.EnumeratedList
                                                                 - if (parameter.Default ==choice)
                                                                         option(value=choice, selected=true) #{choice}
@@ -111,7 +111,7 @@ ul
                                                       - else if (parameter.Type =='boolean')
                                                            select(name='params[' + parameter.Name + ']', placeholder=className)
                                                                 - if (parameter.Default =='')
-                                                                        option(value='') 
+                                                                        option(value='')
                                                                 - each choice in [apiInfo.booleanTrueVal,apiInfo.booleanFalseVal]
                                                                    - if (parameter.Default ==choice)
                                                                            option(value=choice, selected=true) #{choice}
@@ -125,6 +125,114 @@ ul
                                                       - if (parameter.Type =='enumerated' && parameter.EnumeratedDescription)
                                                           dl.clearfix
                                                               - each description, choice in parameter.EnumeratedDescription
+                                                                  dt #{choice}
+                                                                  dd #{description}
+                            - if (method.elements && method.elements.length > 0)
+                                table.elements
+                                    thead
+                                        tr
+                                            th Element
+                                            th Value
+                                            th Type
+                                            th Description
+                                    tbody
+                                        - var elCount = -1
+                                        - each element in method.elements
+                                            - elCount++
+                                            div(id='element' + elCount)
+                                              - if (element.Required =='Y')
+                                                  - var required =true
+                                                  - var className ='required'
+                                              - else
+                                                  - var required =false
+                                                  - var className =''
+                                              tr(class=className)
+                                                  td
+                                                      #{element.Name}
+                                                      - if (element.Type != 'parentElement')
+                                                        input(name='elementNames[' + elCount + ']', type='hidden', value=element.Name)
+                                                  td.header
+                                                      - if (element.Type =='parentElement')
+                                                        input(name='parentElement', value=element.Name, type='hidden')
+                                                        #{element.Default}
+                                                      - else if (element.Type =='enumerated')
+                                                          select(name='elementValues[' + elCount + ']', placeholder=className)
+                                                            - if (element.Default =='')
+                                                                option(value='')
+                                                            - each choice in element.EnumeratedList
+                                                                - if (element.Default ==choice)
+                                                                        option(value=choice, selected=true) #{choice}
+                                                                - else
+                                                                        option(value=choice) #{choice}
+                                                      - else if (element.Type =='boolean')
+                                                           select(name='elementValues[' + elCount + ']', placeholder=className)
+                                                                - if (element.Default =='')
+                                                                        option(value='')
+                                                                - each choice in [apiInfo.booleanTrueVal,apiInfo.booleanFalseVal]
+                                                                   - if (element.Default ==choice)
+                                                                           option(value=choice, selected=true) #{choice}
+                                                                   - else
+                                                                           option(value=choice) #{choice}
+                                                      - else
+                                                          input(name='elementValues[' + elCount + ']', value=element.Default, placeholder=className)
+                                                  td.type=element.Type
+                                                  td.description
+                                                      p=element.Description || 'No description'
+                                                      - if (element.Type =='enumerated' && element.EnumeratedDescription)
+                                                          dl.clearfix
+                                                              - each description, choice in element.EnumeratedDescription
+                                                                  dt #{choice}
+                                                                  dd #{description}
+                            - if (method.headers && method.headers.length > 0)
+                                table.headers
+                                    thead
+                                        tr
+                                            th Request Header
+                                            th Value
+                                            th Type
+                                            th Description
+                                    tbody
+                                        - var headerCount =0
+                                        - each header in method.headers
+                                            - headerCount++
+                                            div(id='header' + headerCount)
+                                              - if (header.Required =='Y')
+                                                  - var required =true
+                                                  - var className ='required'
+                                              - else
+                                                  - var required =false
+                                                  - var className =''
+                                              tr(class=className)
+                                                  td
+                                                        #{header.Name}
+                                                        input(name='headerNames[' + headerCount + ']', type='hidden', value=header.Name)
+                                                  td.header
+                                                      - if (header.Type =='enumerated')
+                                                          select(name='headerValues[' + headerCount + ']', placeholder=className)
+                                                            - if (header.Default =='')
+                                                                option(value='')
+                                                            - each choice in header.EnumeratedList
+                                                                - if (header.Default ==choice)
+                                                                        option(value=choice, selected=true) #{choice}
+                                                                - else
+                                                                        option(value=choice) #{choice}
+                                                      - else if (header.Type =='boolean')
+                                                           select(name='headerValues[' + headerCount + ']', placeholder=className)
+                                                                - if (header.Default =='')
+                                                                        option(value='')
+                                                                - each choice in [apiInfo.booleanTrueVal,apiInfo.booleanFalseVal]
+                                                                   - if (header.Default ==choice)
+                                                                           option(value=choice, selected=true) #{choice}
+                                                                   - else
+                                                                           option(value=choice) #{choice}
+                                                      - else
+                                                          input(name='headerValues[' + headerCount + ']', value=header.Default, placeholder=className)
+                                                  td.type=header.Type
+                                                  td.description
+                                                      p=header.Description || 'No description'
+                                                      - if (header.Type =='enumerated' && header.EnumeratedDescription)
+                                                          dl.clearfix
+                                                              - each description, choice in header.EnumeratedDescription
                                                                   dt #{choice}
                                                                   dd #{description}
                             - if (method.headers && method.headers.length > 0)
@@ -152,5 +260,18 @@ ul
                                                         a(href='#', class='remove') Remove
                                         a(href='#', class='add-headers') Add Header
                                     // Create header fields and button to add/remove headers.
+                            - if (method.rawpayload)
+                                table.rawpayload
+                                    thead
+                                        tr
+                                            th #{method.rawpayload[0].Name}
+                                    tbody
+                                        tr
+                                            td
+                                                #{method.rawpayload[0].Description}
+                                        tr
+                                            td
+                                                textarea(columns='60', rows='10', style='width:95%', name='rawpayload', placeholder=method.rawpayload[0].Default)
+                                                  | #{method.rawpayload[0].Default}
                             - if (!method['read-only'])
                                 input(type='submit', id=method.MethodName, value='Try it!')
